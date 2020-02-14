@@ -1,6 +1,6 @@
 {
   "BBBluetooth": "Aktiver/deaktiver for Bluetooth og FireLeds (LED)",
-  "BBBuzz": "Verdier for buzzer. Av eller på",
+  "BBBuzz": "Status for høyttaleren. Av eller på",
   "BBColors": "Forhåndsdefinerte LED-farger",
   "BBDirection": "Angir retning, fremover eller bakover",
   "BBLightSensor": "lyssensorer",
@@ -35,8 +35,8 @@
   "bitbot.bbStopServos": "Deaktiver servoer (Talon for både Classic & XL, P1 og P2 for XL.)",
   "bitbot.bitBrightness": "Sett lysstyrken til BitFace",
   "bitbot.bitBrightness|param|brightness": "et mål på LED lysstyrke fra 0-255. f.eks: 40",
-  "bitbot.buzz": "Irriter læreren din og lag lyd med buzzeren.",
-  "bitbot.buzz|param|flag": "buzzertilstand (av eller på)",
+  "bitbot.buzz": "Irriter læreren din og lag lyd med høyttaleren.",
+  "bitbot.buzz|param|flag": "høyttalerstatus (av eller på)",
   "bitbot.convertRGB": "Konverter fra RGB-farger til fargenummer",
   "bitbot.drive": "Kjør robot framover (eller bakover) med fart",
   "bitbot.driveMilliseconds": "Kjør robot forover (eller bakover) med fart i så og så mange millisekund",
