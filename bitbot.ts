@@ -251,6 +251,9 @@ namespace bitbot
     let rMotorD1: DigitalPin;
     let rMotorA0: AnalogPin;
     let rMotorA1: AnalogPin;
+    let _deadband = 2;
+    let _p1Trim = 0;
+    let _p2Trim = 0;
 
     function clamp(value: number, min: number, max: number): number
     {
@@ -263,7 +266,7 @@ namespace bitbot
       * @param enable enable or disable Blueetoth
     */
     //% blockId="BBEnableBluetooth"
-    //% block="%enable| 20 Bluetooth"
+    //% block="%enable| 22 Bluetooth"
     //% blockGap=8
     export function bbEnableBluetooth(enable: BBBluetooth)
     {
@@ -858,7 +861,7 @@ namespace bitbot
         return ((r & 0xFF) << 16) | ((g & 0xFF) << 8) | (b & 0xFF);
     }
 
-// Built-in Sensors
+// Built-in Sensors - Inputs and Outputs
 
     /**
       * Sound a buzz.
@@ -866,7 +869,7 @@ namespace bitbot
       */
     //% blockId="bitbot_buzz" block="turn buzzer %flag"
     //% weight=100
-    //% subcategory=Sensors
+    //% subcategory="Inputs & Outputs"
     export function buzz(flag: BBBuzz): void
     {
         let buzz = 0;
@@ -884,7 +887,7 @@ namespace bitbot
     */
     //% blockId="bitbot_sonar" block="read sonar as %unit"
     //% weight=90
-    //% subcategory=Sensors
+    //% subcategory="Inputs & Outputs"
     export function sonar(unit: BBPingUnit): number
     {
         // send pulse
@@ -919,7 +922,7 @@ namespace bitbot
       */
     //% blockId="bitbot_read_line" block="%sensor|line sensor"
     //% weight=80
-    //% subcategory=Sensors
+    //% subcategory="Inputs & Outputs"
     export function readLine(sensor: BBLineSensor): number
     {
         if (getModel() == BBModel.Classic)
@@ -945,7 +948,7 @@ namespace bitbot
       */
     //% blockId="bitbot_read_light" block="%sensor|light sensor"
     //% weight=70
-    //% subcategory=Sensors
+    //% subcategory="Inputs & Outputs"
     export function readLight(sensor: BBLightSensor): number
     {
         if (getModel() == BBModel.Classic)
@@ -977,7 +980,7 @@ namespace bitbot
     //% blockId="bitbot_set_talon" block="open talon %degrees|degrees"
     //% weight=60
     //% degrees.min=0 degrees.max=80
-    //% subcategory=Sensors
+    //% subcategory="Inputs & Outputs"
     export function setTalon(degrees: number): void
     {
         degrees = clamp(degrees, 0, 80);
@@ -990,12 +993,12 @@ namespace bitbot
     /**
       * Position Servos on P1 and P2 (XL Only)
       * @param servo servo to control. P1 or P2
-      * @param degrees Degrees to open Talon (0 to 180). eg: 90
+      * @param degrees Degrees to turn servo (0 to 180). eg: 90
       */
     //% blockId="BBSetServo" block="set servo%servo|to %degrees|degrees"
     //% weight=50
     //% degrees.min=0 degrees.max=180
-    //% subcategory=Sensors
+    //% subcategory="Inputs & Outputs"
     export function bbSetServo(servo: BBServos, degrees: number): void
     {
         degrees = clamp(degrees, 0, 180);
@@ -1009,11 +1012,83 @@ namespace bitbot
     }
 
     /**
+      * Set speed and direction for continuous rotation Servos on P1 and P2 (XL Only)
+      * @param servo servo to control. P1 or P2
+      * @param direction rotate Forward or Reverse
+      * @param speed rotational speed  (0 to 100). eg: 50
+      */
+    //% blockId="BB360Servo" block="continuous servo%servo|%direction at%speed|\\%"
+    //% weight=40
+    //% speed.min=0 speed.max=100
+    //% subcategory="Inputs & Outputs"
+    export function bb360Servo(servo: BBServos, direction: BBDirection, speed: number)
+    {
+        speed = clamp(speed, 0, 100);
+        let dir = (direction == BBDirection.Forward) ? 1 : -1;
+        let degrees = 90 + dir * speed * 90 / 100
+        if (getModel() == BBModel.XL)
+        {
+            if (servo == BBServos.P1)
+            {
+                degrees = clamp(degrees - _p1Trim, 0, 180);
+                if (speed <= _deadband)
+                    pins.digitalWritePin(DigitalPin.P1, 0);
+                else
+                    pins.servoWritePin(AnalogPin.P1, degrees);
+            }
+            else
+            {
+                degrees = clamp(degrees - _p2Trim, 0, 180);
+                if (speed <= _deadband)
+                    pins.digitalWritePin(DigitalPin.P2, 0);
+                else
+                    pins.servoWritePin(AnalogPin.P2, degrees);
+            }
+        }
+    }
+
+    /**
+      * Set deadband for continuous rotation Servos on P1 and P2 (XL Only)
+      * @param deadband speed below which servos are off eg: 5
+      */
+    //% blockId="BBServoDeadband" block="continuous servo deadband%deadband|\\%"
+    //% weight=30
+    //% deadband.min=0 deadband.max=10
+    //% subcategory="Inputs & Outputs"
+    export function bbServoDeadband(deadband: number)
+    {
+        _deadband = clamp(deadband, 0, 5);
+    }
+
+    /**
+      * Set trim for continuous rotation Servos on P1 and P2 (XL Only)
+      * @param servo servo to slow down. P1 or P2
+      * @param trim speed reduction eg: 5
+      */
+    //% blockId="BBServoTrim" block="continuous servo%servo|trim by%trim|\\%"
+    //% weight=30
+    //% trim.min=0 trim.max=50
+    //% subcategory="Inputs & Outputs"
+    export function bbServoTrim(servo: BBServos, trim: number)
+    {
+        if (servo == BBServos.P1)
+        {
+            _p1Trim = clamp(trim, 0, 50);
+            _p2Trim = 0;
+        }
+        else
+        {
+            _p1Trim = 0;
+            _p2Trim = clamp(trim, 0, 50);
+        }
+    }
+
+    /**
       * Disable servos (Talon for both Classic & XL, P1 and P2 for XL only)
       */
     //% blockId="BBStopServos" block="disable all servos"
-    //% weight=40
-    //% subcategory=Sensors
+    //% weight=20
+    //% subcategory="Inputs & Outputs"
     export function bbStopServos(): void
     {
         if (getModel() == BBModel.XL)
